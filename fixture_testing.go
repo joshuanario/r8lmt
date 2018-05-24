@@ -93,6 +93,6 @@ func (tf *TestFixture) assert(t *testing.T, output Record) {
 func (tf *TestFixture) close() {
 	close(tf.channels.ReadySetGo)
 	close(tf.channels.Finished)
-	close(tf.dampchan)
-	close(tf.spamchan)
+	//close(tf.dampchan)	// todo check closing channels https://go101.org/article/channel-closing.html
+	//close(tf.spamchan)	// todo check closing channels https://go101.org/article/channel-closing.html
 }

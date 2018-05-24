@@ -8,6 +8,8 @@ type Config struct {
 	IsReservationExpandable bool
 }
 
+// todo check closing channels https://go101.org/article/channel-closing.html
+
 func NewReserveFirstSpamChan (r8lmtChan chan interface{}, config *Config) chan interface{} {
 	//Caleb Lloyd's idea of rate limiting, first input is reserved ("debounced") to the end of "reservation wait",
 	//an output is expected at end of a reservation irregardless of subsequent inputs during the reservation wait

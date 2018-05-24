@@ -9,6 +9,8 @@ const (
 	THROTTLE = 't'
 )
 
+// todo check closing channels https://go101.org/article/channel-closing.html
+
 func goPipeline (out chan<- interface{}, in <-chan interface{}, delay time.Duration, scheme RateLimit, leading bool, trailing bool) {
 	var isReservationExpandable bool
 	switch scheme {
@@ -62,7 +64,7 @@ func goPipeline (out chan<- interface{}, in <-chan interface{}, delay time.Durat
 		}
 	}()
 	<-done // hang until done
-	close(done)
-	close(spamChan)
-	close(out)
+	close(done)// todo check closing channels https://go101.org/article/channel-closing.html
+	close(spamChan)// todo check closing channels https://go101.org/article/channel-closing.html
+	close(out)// todo check closing channels https://go101.org/article/channel-closing.html
 }
