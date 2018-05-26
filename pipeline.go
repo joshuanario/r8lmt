@@ -5,8 +5,8 @@ import "time"
 type RateLimit rune
 
 const (
-	DEBOUNCE = 'd'
-	THROTTLE = 't'
+	DEBOUNCE = RateLimit('d')
+	THROTTLE = RateLimit('t')
 )
 
 // todo check closing channels https://go101.org/article/channel-closing.html
