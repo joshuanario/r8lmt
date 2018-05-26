@@ -39,7 +39,7 @@ type TestChannels struct {
 func spamStimulus(stimuli Record, key int, spammy chan<- interface{}){
 	stimulus := stimuli[key]
 	if stimulus != BLANK {
-		spammy <- stimulus
+		spammy<- stimulus
 		str := fmt.Sprintf("in=%d  ", stimulus)+TimeStamp()
 		printout(str)
 	}
@@ -54,7 +54,7 @@ func Spam(stimuli Record, spammy chan<- interface{}, tchan *TestChannels, cnf *T
 SpamReady:
 	for {
 		select {
-		case signal := <- readyToSpam:
+		case signal := <-readyToSpam:
 			if signal == GONOW {
 				printout("spam confirmed ready")
 				break SpamReady
@@ -66,13 +66,13 @@ SpamReady:
 	cnt := 0
 	for {
 		select {
-		case <- pulse:
+		case <-pulse:
 			txlog(stimuli, cnt, spammy)
 			cnt++
 		default:
 			done := cnt >= cnf.MaxPulses || time.Since(begin) >= cnf.TimeOut
 			if done {
-				fin <- true
+				fin<- true
 				printout("stop spamming @ "+TimeStamp())
 				return
 			}
@@ -103,7 +103,7 @@ func Poll(output Record, dampchan <-chan interface{}, tchan *TestChannels, cnf *
 PollReady:
 	for {
 		select {
-		case signal := <- readyToPoll:
+		case signal := <-readyToPoll:
 			if signal == GONOW {
 				printout("poll confirmed ready")
 				break PollReady
@@ -119,7 +119,7 @@ PollReady:
 			cnt++
 		case <-time.After(dumpperiod):
 			go coredump()
-		case msg, ok :=<- dampchan:
+		case msg, ok := <-dampchan:
 			if !ok{
 				printstop()
 				return

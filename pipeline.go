@@ -38,7 +38,7 @@ func goPipeline (out chan<- interface{}, in <-chan interface{}, delay time.Durat
 		for {
 			select{
 			case p, ok := <-r8lmtChan:
-				out <- p
+				out<- p
 				if !ok {
 					done<-true
 					return
@@ -55,9 +55,9 @@ func goPipeline (out chan<- interface{}, in <-chan interface{}, delay time.Durat
 			case <-done:
 				return
 			case p, ok := <-in:
-				spamChan <- p
+				spamChan<- p
 				if !ok {
-					done<-true
+					done<- true
 					return
 				}
 			}

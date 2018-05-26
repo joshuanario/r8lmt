@@ -22,7 +22,7 @@ func NewReserveFirstSpamChan (r8lmtChan chan interface{}, config *Config) chan i
 	passthru := false
 	sendbuf := func(waitinput func()) {
 		go func() {
-			r8lmtChan <- buffer
+			r8lmtChan<- buffer
 		}()
 		if passthru{
 			waitinput()
@@ -35,7 +35,7 @@ func NewReserveFirstSpamChan (r8lmtChan chan interface{}, config *Config) chan i
 			defer close(r8lmtChan)
 			timer := time.NewTimer(config.Reservation)
 			aftersend := func() {
-				buffer, ok = <- input
+				buffer, ok = <-input
 				if !ok {
 					return
 				}
@@ -43,7 +43,7 @@ func NewReserveFirstSpamChan (r8lmtChan chan interface{}, config *Config) chan i
 			}
 			for {
 				select {
-				case buffer, ok = <- input:
+				case buffer, ok = <-input:
 					if !ok {
 						// If channel closed exit goroutine
 						return
@@ -60,7 +60,7 @@ func NewReserveFirstSpamChan (r8lmtChan chan interface{}, config *Config) chan i
 		go func() {
 			defer close(r8lmtChan)
 			aftersend := func() {
-				buffer, ok = <- input
+				buffer, ok = <-input
 				if !ok {
 					// If channel closed exit goroutine
 					return
@@ -68,7 +68,7 @@ func NewReserveFirstSpamChan (r8lmtChan chan interface{}, config *Config) chan i
 			}
 			for {
 				select {
-				case buffer, ok = <- input:
+				case buffer, ok = <-input:
 					if !ok {
 						return
 					}
@@ -126,7 +126,7 @@ func NewAdmitFirstSpamChan (r8lmtChan chan interface{}, config *Config) chan int
 				} else {	//discard buffer at end of reservation wait
 					waitpassthruinput() //just wait for next admitted input
 				}
-			case buffer, ok = <- input:	//data was received from input during the reservation wait
+			case buffer, ok = <-input:	//data was received from input during the reservation wait
 				if !ok {
 					return
 				}
