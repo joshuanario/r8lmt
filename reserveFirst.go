@@ -5,7 +5,7 @@ import "time"
 //reserve-first pipelining, https://blog.golang.org/pipelines
 
 func NewReserveFirstSpamChan (r8lmtChan chan interface{}, config *Config) chan interface{} {
-	//Caleb Lloyd's idea of rate limiting, first input is admitted ("debouncedPipeline") to the end of "reservation wait",
+	//Caleb Lloyd's idea of rate limiting, first input is admitted ("debounced") to the end of "reservation wait",
 	//an output is expected at end of a reservation irregardless of subsequent inputs during the reservation wait
 	//another mental model for this is: the first input to "check in" gets wait listed for a certain time ("reservation
 	// wait") before admission and any other inputs that attempt to check in while someone is wait listed gets rejected
