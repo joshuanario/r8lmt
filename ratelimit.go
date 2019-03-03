@@ -50,11 +50,8 @@ type WaitList struct {
 	Maximum int
 }
 
-func NewWaitList() WaitList {
-	return struct {
-		OnWait  OnWait
-		Maximum int
-	}{OnWait: FIRSTINLINE, Maximum: 0}
+func NewWaitList() *WaitList {
+	return &WaitList{OnWait: FIRSTINLINE, Maximum: 0}
 }
 
 func NewLimiter(in chan interface{}, out chan interface{}, t time.Duration, s Style, bw BeforeWait) *RateLimit {
@@ -68,7 +65,8 @@ func NewLimiter(in chan interface{}, out chan interface{}, t time.Duration, s St
 		Duration:     t,
 		IsExtensible: ext,
 	}
-	ret := RateLimit{WaitList: NewWaitList(), Reservation: r, Limited: out, Spammy: in, MaxReservations: 0}
+	ret := RateLimit{WaitList: *NewWaitList(), Reservation: r, Limited: out, Spammy: in, MaxReservations: 0}
+	startPipeline(ret)
 	return &ret
 }
 
@@ -81,6 +79,7 @@ type Config struct { // todo nuke config ifo rl
 func startPipeline(rl RateLimit) {
 	if rl.Reservation.BeforeWait == ADMITFIRST {
 		AdmitFirstPipeline(&rl)
+	} else {
 		ReserveFirstPipeline(&rl)
 	}
 }
