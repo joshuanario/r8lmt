@@ -15,10 +15,6 @@ type Config struct {
 	IsExtensible   bool
 }
 
-func Throttler(out chan<- interface{}, in <-chan interface{}, delay time.Duration, leading bool, trailing bool) {
-	goPipeline(out, in, delay, THROTTLE, leading, trailing)
-}
-
 //func goPipeline(out chan<- interface{}, in <-chan interface{}, reservation time.Duration, style Style, leading bool, trailing bool) {
 //	var isReservationExtensible bool
 //	switch style {
