@@ -13,34 +13,34 @@ const (
 
 type Config struct {
 	WillAdmitAfter bool
-	Reservation time.Duration
-	IsReservationExpandable bool
+	Reservation    time.Duration
+	IsExtensible   bool
 }
 
-func Debouncer (out chan<- interface{}, in <-chan interface{}, delay time.Duration,	leading bool, trailing bool) {
+func Debouncer(out chan<- interface{}, in <-chan interface{}, delay time.Duration, leading bool, trailing bool) {
 	goPipeline(out, in, delay, DEBOUNCE, leading, trailing)
 }
 
-func Throttler (out chan<- interface{}, in <-chan interface{}, delay time.Duration,	leading bool, trailing bool) {
-	goPipeline(out,in, delay, THROTTLE, leading, trailing)
+func Throttler(out chan<- interface{}, in <-chan interface{}, delay time.Duration, leading bool, trailing bool) {
+	goPipeline(out, in, delay, THROTTLE, leading, trailing)
 }
 
-func goPipeline (out chan<- interface{}, in <-chan interface{}, reservation time.Duration, scheme RateLimit, leading bool, trailing bool) {
-	var isReservationExpandable bool
+func goPipeline(out chan<- interface{}, in <-chan interface{}, reservation time.Duration, scheme RateLimit, leading bool, trailing bool) {
+	var isReservationExtensible bool
 	switch scheme {
 	case THROTTLE:
-		isReservationExpandable = false
+		isReservationExtensible = false
 	case DEBOUNCE:
 	default:
-		isReservationExpandable = true
+		isReservationExtensible = true
 	}
 	done := make(chan bool)
 	r8lmtChan := make(chan interface{})
 	spamChan := make(chan interface{})
 	config := &Config{
-		Reservation:reservation,
-		IsReservationExpandable:isReservationExpandable,
-		WillAdmitAfter:trailing,
+		Reservation:    reservation,
+		IsExtensible:   isReservationExtensible,
+		WillAdmitAfter: trailing,
 	}
 	if leading {
 		spamChan = NewAdmitFirstSpamChan(r8lmtChan, config)
@@ -50,11 +50,11 @@ func goPipeline (out chan<- interface{}, in <-chan interface{}, reservation time
 	go func() {
 		//go routine to rx from r8lmt then send to out
 		for {
-			select{
+			select {
 			case p, ok := <-r8lmtChan:
-				out<- p
+				out <- p
 				if !ok {
-					done<-true
+					done <- true
 					return
 				}
 			case <-done:
@@ -65,20 +65,20 @@ func goPipeline (out chan<- interface{}, in <-chan interface{}, reservation time
 	go func() {
 		//go routine to pass in to spam
 		for {
-			select{
+			select {
 			case <-done:
 				return
 			case p, ok := <-in:
-				spamChan<- p
+				spamChan <- p
 				if !ok {
-					done<- true
+					done <- true
 					return
 				}
 			}
 		}
 	}()
-	<-done // hang until done
-	close(done)// todo check closing channels https://go101.org/article/channel-closing.html
-	close(spamChan)// todo check closing channels https://go101.org/article/channel-closing.html
-	close(out)// todo check closing channels https://go101.org/article/channel-closing.html
+	<-done          // hang until done
+	close(done)     // todo check closing channels https://go101.org/article/channel-closing.html
+	close(spamChan) // todo check closing channels https://go101.org/article/channel-closing.html
+	close(out)      // todo check closing channels https://go101.org/article/channel-closing.html
 }

@@ -4,7 +4,7 @@ import "time"
 
 //reserve-first pipelining, https://blog.golang.org/pipelines
 
-func NewReserveFirstSpamChan (r8lmtChan chan interface{}, config *Config) chan interface{} {
+func NewReserveFirstSpamChan(r8lmtChan chan interface{}, config *Config) chan interface{} {
 	//Caleb Lloyd's idea of rate limiting, first input is admitted ("debounced") to the end of "reservation wait",
 	//an output is expected at end of a reservation irregardless of subsequent inputs during the reservation wait
 	//another mental model for this is: the first input to "check in" gets wait listed for a certain time ("reservation
@@ -15,9 +15,9 @@ func NewReserveFirstSpamChan (r8lmtChan chan interface{}, config *Config) chan i
 	spamChan := make(chan interface{}) //pipelined channel for rx only, no need to close //todo add direction
 	var buffer interface{}
 	var ok bool
-	unreserved := false	//flag when something is wait listed
+	unreserved := false //flag when something is wait listed
 	debouncedPipeline := func() {
-		defer close(r8lmtChan)	//todo fix channel closing
+		defer close(r8lmtChan) //todo fix channel closing
 		timer := time.NewTimer(config.Reservation)
 		for {
 			select {
@@ -30,7 +30,7 @@ func NewReserveFirstSpamChan (r8lmtChan chan interface{}, config *Config) chan i
 				unreserved = true
 			case <-timer.C:
 				go func() {
-					r8lmtChan<- buffer
+					r8lmtChan <- buffer
 				}()
 				if unreserved {
 					buffer, ok = <-spamChan
@@ -44,7 +44,7 @@ func NewReserveFirstSpamChan (r8lmtChan chan interface{}, config *Config) chan i
 		}
 	}
 	throttledPipeline := func() {
-		defer close(r8lmtChan)	//todo fix channel closing
+		defer close(r8lmtChan) //todo fix channel closing
 		for {
 			select {
 			case buffer, ok = <-spamChan:
@@ -54,7 +54,7 @@ func NewReserveFirstSpamChan (r8lmtChan chan interface{}, config *Config) chan i
 				unreserved = true
 			case <-time.After(config.Reservation):
 				go func() {
-					r8lmtChan<- buffer
+					r8lmtChan <- buffer
 				}()
 				if unreserved {
 					buffer, ok = <-spamChan
@@ -68,9 +68,9 @@ func NewReserveFirstSpamChan (r8lmtChan chan interface{}, config *Config) chan i
 		}
 	}
 
-	if config.IsReservationExpandable {	//aka debouncer where "reservation wait" interval can be extended due to spam
+	if config.IsExtensible { //aka debouncer where "reservation wait" interval can be extended due to spam
 		go debouncedPipeline()
-	} else {	//aka fixed-rate throttler where reservation intervals are consistent
+	} else { //aka fixed-rate throttler where reservation intervals are consistent
 		go throttledPipeline()
 	}
 	return spamChan

@@ -3,6 +3,7 @@ package r8lmt
 import (
 	"testing"
 )
+
 // todo generate expectations
 
 const defaultMaxPulses = 80
@@ -11,9 +12,9 @@ const defaultReservationPulses = 5
 
 func TestThrottlerShortDelay(t *testing.T) {
 	stimuli := map[int]uint8{
-		0: 255,
-		2: 254,
-		3: 253,
+		0:  255,
+		2:  254,
+		3:  253,
 		13: 252,
 		16: 251,
 		18: 250,
@@ -27,9 +28,9 @@ func TestThrottlerShortDelay(t *testing.T) {
 
 func TestThrottlerLongDelay(t *testing.T) {
 	stimuli := map[int]uint8{
-		0: 255,
-		2: 254,
-		3: 253,
+		0:  255,
+		2:  254,
+		3:  253,
 		13: 252,
 		16: 251,
 		18: 250,
@@ -43,9 +44,9 @@ func TestThrottlerLongDelay(t *testing.T) {
 
 func TestDebouncerFeedback(t *testing.T) {
 	stimuli := map[int]uint8{
-		0: 255,
-		2: 254,
-		3: 253,
+		0:  255,
+		2:  254,
+		3:  253,
 		13: 252,
 		16: 251,
 	}
@@ -55,9 +56,9 @@ func TestDebouncerFeedback(t *testing.T) {
 
 func TestDebouncerNoFeedback(t *testing.T) {
 	stimuli := map[int]uint8{
-		0: 255,
-		2: 254,
-		3: 253,
+		0:  255,
+		2:  254,
+		3:  253,
 		13: 252,
 		16: 251,
 	}
@@ -65,7 +66,7 @@ func TestDebouncerNoFeedback(t *testing.T) {
 	testRateLimiter(t, stimuli, defaultReservationPulses, defaultMaxPulses, false, true, false, expectations)
 }
 
-func testRateLimiter(t *testing.T, stimuli map[int]uint8, reservationPulses int, maxPulses int, reserveFirst bool, expandableReservation bool, repetitive bool, expectations map[int]uint8) {
-	tf := NewTestFixture(stimuli,reservationPulses, maxPulses, reserveFirst, expandableReservation, repetitive, expectations)
+func testRateLimiter(t *testing.T, stimuli map[int]uint8, reservationPulses int, maxPulses int, reserveFirst bool, extensibleReservation bool, repetitive bool, expectations map[int]uint8) {
+	tf := NewTestFixture(stimuli, reservationPulses, maxPulses, reserveFirst, extensibleReservation, repetitive, expectations)
 	tf.Test(t)
 }
