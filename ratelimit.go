@@ -31,7 +31,7 @@ const (
 )
 
 type RateLimit struct {
-	MaxReservations int
+	MaxReservations int //todo maxReservations
 	Spammy          chan interface{}
 	Limited         chan interface{}
 	Reservation     Reservation
@@ -68,12 +68,6 @@ func NewLimiter(in chan interface{}, out chan interface{}, t time.Duration, s St
 	ret := RateLimit{WaitList: *NewWaitList(), Reservation: r, Limited: out, Spammy: in, MaxReservations: 0}
 	startPipeline(ret)
 	return &ret
-}
-
-type Config struct { // todo nuke config ifo rl
-	WillAdmitAfter bool //todo maxReservations
-	Reservation    time.Duration
-	IsExtensible   bool
 }
 
 func startPipeline(rl RateLimit) {

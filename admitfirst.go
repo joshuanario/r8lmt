@@ -21,8 +21,8 @@ func AdmitFirstPipeline(rl *RateLimit) {
 		timer = time.NewTimer(rl.Reservation.Duration)
 	}
 	listenAndAdmitNextCheckin := func() {
-		buffer, ok := <-spamChan //blocks for a "check in"
-		admit(buffer)            //admit a checkin
+		buffer, ok = <-spamChan //blocks for a "check in"
+		admit(buffer)           //admit a checkin
 		// If channel closed exit goroutine
 		if !ok {
 			return
