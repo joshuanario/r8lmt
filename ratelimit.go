@@ -90,7 +90,8 @@ func startPipeline(rl RateLimit) {
 	if rl.Reservation.BeforeWait == ADMITFIRST {
 		spamChan = NewAdmitFirstSpamChan(r8lmtChan, config)
 	} else {
-		spamChan = NewReserveFirstSpamChan(r8lmtChan, config)
+		//spamChan = NewReserveFirstSpamChan(r8lmtChan, config) 	// todo cleanup unused
+		ReserveFirstPipeline(&rl)
 	}
 	go func() {
 		//go routine to rx from r8lmt then send to Limited
