@@ -72,6 +72,7 @@ func (tf *TestFixture) Test(t *testing.T) {
 	go Spam(tf.stimuli, tf.spamchan, tf.channels, tf.config)
 	standby := tf.config.PulsePeriod * time.Duration(tf.config.ReservationPulses)
 	<-time.After(standby)
+	time.Sleep(100) //w/o sleep tests will fail
 	tf.channels.ReadySetGo <- GONOW
 	<-tf.channels.Finished //hang until signalled to stop
 
