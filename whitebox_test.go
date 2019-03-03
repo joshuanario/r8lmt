@@ -1,8 +1,6 @@
 package r8lmt
 
-import (
-	"testing"
-)
+import "testing"
 
 // todo generate expectations
 

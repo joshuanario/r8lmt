@@ -1,13 +1,13 @@
 package r8lmt
 
 import (
-	"time"
 	"fmt"
+	"time"
 )
 
 var isTestingVerbose = true
 
-var printout = func(msg string){
+var printout = func(msg string) {
 	if isTestingVerbose {
 		fmt.Println(msg)
 	}
@@ -25,7 +25,7 @@ func TickStamp() string {
 	return time.Now().Format(tickFormat)
 }
 
-const GONOW = uint8(2^8-1)
+const GONOW = uint8(2 ^ 8 - 1)
 
 const BLANK = 0
 
@@ -33,19 +33,19 @@ type Record map[int]uint8
 
 type TestChannels struct {
 	ReadySetGo chan uint8
-	Finished chan bool
+	Finished   chan bool
 }
 
-func spamStimulus(stimuli Record, key int, spammy chan<- interface{}){
+func spamStimulus(stimuli Record, key int, spammy chan<- interface{}) {
 	stimulus := stimuli[key]
 	if stimulus != BLANK {
-		spammy<- stimulus
-		str := fmt.Sprintf("in=%d  ", stimulus)+TimeStamp()
+		spammy <- stimulus
+		str := fmt.Sprintf("in=%d  ", stimulus) + TimeStamp()
 		printout(str)
 	}
 }
 
-func Spam(stimuli Record, spammy chan<- interface{}, tchan *TestChannels, cnf *TestConfig) {	//spam routine
+func Spam(stimuli Record, spammy chan<- interface{}, tchan *TestChannels, cnf *TestConfig) { //spam routine
 	begin := time.Now()
 	pulse := time.Tick(cnf.PulsePeriod)
 	var txlog = spamStimulus
@@ -59,10 +59,10 @@ SpamReady:
 				printout("spam confirmed ready")
 				break SpamReady
 			}
-		default:	//nonblocking //do nothing and keep waiting
+		default: //nonblocking //do nothing and keep waiting
 		}
 	}
-	printout("start spamming... "+TimeStamp())
+	printout("start spamming... " + TimeStamp())
 	cnt := 0
 	for {
 		select {
@@ -72,8 +72,8 @@ SpamReady:
 		default:
 			done := cnt >= cnf.MaxPulses || time.Since(begin) >= cnf.TimeOut
 			if done {
-				fin<- true
-				printout("stop spamming @ "+TimeStamp())
+				fin <- true
+				printout("stop spamming @ " + TimeStamp())
 				return
 			}
 		}
@@ -82,22 +82,22 @@ SpamReady:
 }
 
 func Poll(output Record, dampchan <-chan interface{}, tchan *TestChannels, cnf *TestConfig) {
-	printout("init polling @ "+TimeStamp())
+	printout("init polling @ " + TimeStamp())
 	begin := time.Now()
 	var accum = make(map[int64]uint8)
 	var coredump = func() {
-		printout("dump @ "+time.Since(begin).String())
+		printout("dump @ " + time.Since(begin).String())
 		for ns, rec := range accum {
-			str := fmt.Sprintf("time[%d ns] : msg=%d",ns, rec)
+			str := fmt.Sprintf("time[%d ns] : msg=%d", ns, rec)
 			printout(str)
 		}
 	}
 	var printstop = func() {
-		printout("stop polling @ "+TimeStamp())
+		printout("stop polling @ " + TimeStamp())
 		coredump()
 	}
 	pulse := cnf.PulsePeriod
-	dumpperiod := time.Duration(cnf.ReservationPulses)*pulse
+	dumpperiod := time.Duration(cnf.ReservationPulses) * pulse
 	var donePolling <-chan bool = tchan.Finished
 	var readyToPoll <-chan uint8 = tchan.ReadySetGo
 PollReady:
@@ -108,26 +108,26 @@ PollReady:
 				printout("poll confirmed ready")
 				break PollReady
 			}
-		default:	//nonblocking //do nothing and keep waiting
+		default: //nonblocking //do nothing and keep waiting
 		}
 	}
-	printout("start polling..."+TimeStamp())
+	printout("start polling..." + TimeStamp())
 	cnt := 0
-	for {	//record dampchan, listen for done
+	for { //record dampchan, listen for done
 		select {
 		case <-time.After(pulse):
 			cnt++
 		case <-time.After(dumpperiod):
 			go coredump()
 		case msg, ok := <-dampchan:
-			if !ok{
+			if !ok {
 				printstop()
 				return
 			}
 			switch v := msg.(type) {
-			case uint8:	//record to output
+			case uint8: //record to output
 				if v != BLANK {
-					str := fmt.Sprintf("@cnt[%d] := %d  ",cnt,v)+TimeStamp()
+					str := fmt.Sprintf("@cnt[%d] := %d  ", cnt, v) + TimeStamp()
 					printout(str)
 					accum[time.Now().UnixNano()] = v
 					output[cnt] = v
