@@ -2,57 +2,89 @@ package r8lmt
 
 import "time"
 
-type RateLimit rune
+type BeforeWait int
 
 const (
-	DEBOUNCE = RateLimit('d')
-	THROTTLE = RateLimit('t')
+	RESERVEFIRST = BeforeWait('r')
+	ADMITFIRST   = BeforeWait('a')
 )
 
-type Reservation time.Duration
+type AfterWait int
 
-type Config struct {
-	WillAdmitAfter bool
-	Reservation    time.Duration
-	IsExtensible   bool
+const (
+	CLEARALL = AfterWait('c')
+	KEEPALL  = AfterWait('k')
+)
+
+type OnWait int
+
+const (
+	FIRSTINLINE = OnWait('f')
+	LASTINLINE  = OnWait('l')
+)
+
+type RateLimit struct {
+	MaxReservations int
+	Spammy          chan interface{}
+	Limited         chan interface{}
+	Reservation     Reservation
+	WaitList        WaitList
 }
 
-func Debouncer(out chan<- interface{}, in <-chan interface{}, delay time.Duration, leading bool, trailing bool) {
-	goPipeline(out, in, delay, DEBOUNCE, leading, trailing)
+type Reservation struct {
+	BeforeWait   BeforeWait
+	AfterWait    AfterWait
+	IsExtensible bool
+	Duration     time.Duration
 }
 
-func Throttler(out chan<- interface{}, in <-chan interface{}, delay time.Duration, leading bool, trailing bool) {
-	goPipeline(out, in, delay, THROTTLE, leading, trailing)
+type WaitList struct {
+	OnWait  OnWait
+	Maximum int
 }
 
-func goPipeline(out chan<- interface{}, in <-chan interface{}, reservation time.Duration, scheme RateLimit, leading bool, trailing bool) {
-	var isReservationExtensible bool
-	switch scheme {
-	case THROTTLE:
-		isReservationExtensible = false
-	case DEBOUNCE:
-	default:
-		isReservationExtensible = true
+func NewWaitList() WaitList {
+	return struct {
+		OnWait  OnWait
+		Maximum int
+	}{OnWait: FIRSTINLINE, Maximum: 0}
+}
+
+func NewLimiter(in chan interface{}, out chan interface{}, t time.Duration, s Style, bw BeforeWait) *RateLimit {
+	var ext bool = false
+	if s == DEBOUNCE {
+		ext = true
 	}
+	r := Reservation{
+		AfterWait:    CLEARALL,
+		BeforeWait:   bw,
+		Duration:     t,
+		IsExtensible: ext,
+	}
+	ret := RateLimit{WaitList: NewWaitList(), Reservation: r, Limited: out, Spammy: in, MaxReservations: 0}
+	return &ret
+}
+
+func startPipeline(rl RateLimit) {
 	done := make(chan bool)
 	r8lmtChan := make(chan interface{})
 	spamChan := make(chan interface{})
-	config := &Config{
-		Reservation:    reservation,
-		IsExtensible:   isReservationExtensible,
-		WillAdmitAfter: trailing,
+	config := &Config{ // todo nuke config ifo rl
+		Reservation:    rl.Reservation.Duration,
+		IsExtensible:   rl.Reservation.IsExtensible,
+		WillAdmitAfter: rl.WaitList.Maximum > 0,
 	}
-	if leading {
+	if rl.Reservation.BeforeWait == ADMITFIRST {
 		spamChan = NewAdmitFirstSpamChan(r8lmtChan, config)
 	} else {
 		spamChan = NewReserveFirstSpamChan(r8lmtChan, config)
 	}
 	go func() {
-		//go routine to rx from r8lmt then send to out
+		//go routine to rx from r8lmt then send to Limited
 		for {
 			select {
 			case p, ok := <-r8lmtChan:
-				out <- p
+				rl.Limited <- p
 				if !ok {
 					done <- true
 					return
@@ -63,12 +95,12 @@ func goPipeline(out chan<- interface{}, in <-chan interface{}, reservation time.
 		}
 	}()
 	go func() {
-		//go routine to pass in to spam
+		//go routine to pass Spammy to spam
 		for {
 			select {
 			case <-done:
 				return
-			case p, ok := <-in:
+			case p, ok := <-rl.Spammy:
 				spamChan <- p
 				if !ok {
 					done <- true
@@ -77,8 +109,8 @@ func goPipeline(out chan<- interface{}, in <-chan interface{}, reservation time.
 			}
 		}
 	}()
-	<-done          // hang until done
-	close(done)     // todo check closing channels https://go101.org/article/channel-closing.html
-	close(spamChan) // todo check closing channels https://go101.org/article/channel-closing.html
-	close(out)      // todo check closing channels https://go101.org/article/channel-closing.html
+	<-done            // hang until done
+	close(done)       // todo check closing channels https://go101.org/article/channel-closing.html
+	close(spamChan)   // todo check closing channels https://go101.org/article/channel-closing.html
+	close(rl.Limited) // todo check closing channels https://go101.org/article/channel-closing.html
 }
