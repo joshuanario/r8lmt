@@ -32,13 +32,6 @@ func newTestChannels() *TestChannels {
 	}
 }
 
-func newSUT(reserveFirst bool) func(chan interface{}, *Config) chan interface{} {
-	if reserveFirst {
-		return NewReserveFirstSpamChan
-	}
-	return NewAdmitFirstSpamChan
-}
-
 type TestFixture struct {
 	dampchan     chan interface{}
 	spamchan     chan interface{}
@@ -50,20 +43,23 @@ type TestFixture struct {
 
 func NewTestFixture(stimuli map[int]uint8, reservationPulses int, maxPulses int, reserveFirst bool, extensibleReservation bool, repetitive bool, expectations map[int]uint8) *TestFixture {
 	tcnf := newTestConfig(reservationPulses, defaultPulsePeriod, maxPulses, defaultTimeOut)
-	config := &Config{
-		WillAdmitAfter: repetitive,
-		IsExtensible:   extensibleReservation,
-		Reservation:    time.Duration(tcnf.ReservationPulses) * time.Duration(tcnf.PulsePeriod),
+	bw := ADMITFIRST
+	if reserveFirst {
+		bw = RESERVEFIRST
 	}
-	sut := newSUT(reserveFirst)
-	dampchan := make(chan interface{})
-	var spamchan chan interface{}
-	spamchan = sut(dampchan, config)
+	style := THROTTLE
+	if extensibleReservation {
+		style = DEBOUNCE
+	}
+	t := time.Duration(tcnf.ReservationPulses) * time.Duration(tcnf.PulsePeriod)
+	limitchan := make(chan interface{})
+	spamchan := make(chan interface{})
+	sut := NewLimiter(spamchan, limitchan, t, style, bw)
 	tchan := newTestChannels()
 	return &TestFixture{
 		stimuli:      stimuli,
-		dampchan:     dampchan,
-		spamchan:     spamchan,
+		dampchan:     sut.Limited,
+		spamchan:     sut.Spammy,
 		channels:     tchan,
 		config:       tcnf,
 		expectations: expectations,
