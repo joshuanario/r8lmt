@@ -4,12 +4,12 @@ import "time"
 
 type RateLimit rune
 
-type Reservation time.Duration
-
 const (
 	DEBOUNCE = RateLimit('d')
 	THROTTLE = RateLimit('t')
 )
+
+type Reservation time.Duration
 
 type Config struct {
 	WillAdmitAfter bool
