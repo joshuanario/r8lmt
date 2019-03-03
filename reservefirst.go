@@ -16,7 +16,7 @@ func ReserveFirstPipeline(rl *RateLimit) {
 	var ok bool
 	unreserved := false //flag when something is wait listed
 	debouncedPipeline := func() {
-		defer close(rl.Limited) //todo fix channel closing
+		defer close(rl.Limited) //closing channels https://go101.org/article/channel-closing.html
 		timer := time.NewTimer(rl.Reservation.Duration)
 		for {
 			select {
@@ -43,7 +43,7 @@ func ReserveFirstPipeline(rl *RateLimit) {
 		}
 	}
 	throttledPipeline := func() {
-		defer close(rl.Limited) //todo fix channel closing
+		defer close(rl.Limited) //closing channels https://go101.org/article/channel-closing.html
 		for {
 			select {
 			case buffer, ok = <-spamChan:

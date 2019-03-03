@@ -79,52 +79,8 @@ type Config struct { // todo nuke config ifo rl
 }
 
 func startPipeline(rl RateLimit) {
-	done := make(chan bool)
-	r8lmtChan := make(chan interface{})
-	spamChan := make(chan interface{})
-	config := &Config{ // todo nuke config ifo rl
-		Reservation:    rl.Reservation.Duration,
-		IsExtensible:   rl.Reservation.IsExtensible,
-		WillAdmitAfter: rl.WaitList.Maximum > 0,
-	}
 	if rl.Reservation.BeforeWait == ADMITFIRST {
-		spamChan = NewAdmitFirstSpamChan(r8lmtChan, config)
-	} else {
-		//spamChan = NewReserveFirstSpamChan(r8lmtChan, config) 	// todo cleanup unused
+		AdmitFirstPipeline(&rl)
 		ReserveFirstPipeline(&rl)
 	}
-	go func() {
-		//go routine to rx from r8lmt then send to Limited
-		for {
-			select {
-			case p, ok := <-r8lmtChan:
-				rl.Limited <- p
-				if !ok {
-					done <- true
-					return
-				}
-			case <-done:
-				return
-			}
-		}
-	}()
-	go func() {
-		//go routine to pass Spammy to spam
-		for {
-			select {
-			case <-done:
-				return
-			case p, ok := <-rl.Spammy:
-				spamChan <- p
-				if !ok {
-					done <- true
-					return
-				}
-			}
-		}
-	}()
-	<-done            // hang until done
-	close(done)       // todo check closing channels https://go101.org/article/channel-closing.html
-	close(spamChan)   // todo check closing channels https://go101.org/article/channel-closing.html
-	close(rl.Limited) // todo check closing channels https://go101.org/article/channel-closing.html
 }
