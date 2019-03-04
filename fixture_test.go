@@ -76,14 +76,19 @@ func (tf *TestFixture) Test(t *testing.T) {
 	tf.channels.ReadySetGo <- GONOW
 	<-tf.channels.Finished //hang until signalled to stop
 
-	//todo compare output and expectations
 	tf.assert(t, output)
 
 	defer tf.close()
 }
 
 func (tf *TestFixture) assert(t *testing.T, output Record) {
-	//todo compare output and tf.expectations
+	//todo display count of outputs
+	//todo display count of stimuli
+	//todo make assertion on pulse gaps
+	//todo assert count is less than stimuli
+	//todo assert new new/unknown output
+	//todo assert output count is not zero
+
 	//tf.expectations
 }
 
