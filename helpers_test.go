@@ -51,7 +51,6 @@ func Spam(stimuli Record, spammy chan<- interface{}, tchan *TestChannels, cnf *T
 	var txlog = spamStimulus
 	var fin chan<- bool = tchan.Finished
 	var readyToSpam <-chan uint8 = tchan.ReadySetGo
-	time.Sleep(110) //w/o sleep tests will fail
 SpamReady:
 	for {
 		select {

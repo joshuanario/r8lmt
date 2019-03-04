@@ -25,7 +25,10 @@ func newTestConfig(reservationPulses int, pulsePeriod time.Duration, maxPulses i
 	}
 }
 
-func newTestChannels() *TestChannels {
+func newTestChannels() *TestChannels { //todo better test chan
+	//poller and spammer should have their own ready channel to fixture
+	//then both chans has to be live for fixture to say GONOW
+	//currently, poller and spammer are racing
 	return &TestChannels{
 		ReadySetGo: make(chan uint8),
 		Finished:   make(chan bool),
@@ -72,9 +75,8 @@ func (tf *TestFixture) Test(t *testing.T) {
 	go Spam(tf.stimuli, tf.spamchan, tf.channels, tf.config)
 	standby := tf.config.PulsePeriod * time.Duration(tf.config.ReservationPulses)
 	<-time.After(standby)
-	time.Sleep(100) //w/o sleep tests will fail
-	tf.channels.ReadySetGo <- GONOW
-	<-tf.channels.Finished //hang until signalled to stop
+	tf.channels.ReadySetGo <- GONOW //todo better testchan
+	<-tf.channels.Finished          //hang until signalled to stop
 
 	tf.assert(t, output)
 
