@@ -101,6 +101,7 @@ func Poll(output Record, dampchan <-chan interface{}, tchan *TestChannels, cnf *
 	dumpperiod := time.Duration(cnf.ReservationPulses) * pulse
 	var donePolling <-chan bool = tchan.Finished
 	var readyToPoll <-chan uint8 = tchan.ReadySetGo
+	printout("are we there yet?")
 PollReady:
 	for {
 		select {
