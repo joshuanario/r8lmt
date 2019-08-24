@@ -2,10 +2,11 @@ package r8lmt
 
 import "time"
 
+//AdmitFirstPipeline
+//inspired by leo lara https://disqus.com/by/disqus_BI7TGHPb0v/
+//first input is "admitted" ("pass through") and begins the "reservation" (delay of time)
+//any inputs "checking in" during the reservation gets "wait listed" for admission at end of reservation
 func AdmitFirstPipeline(rl *RateLimit) {
-	//inspired by leo lara https://disqus.com/by/disqus_BI7TGHPb0v/
-	//first input is "admitted" ("pass through") and begins the "reservation" (delay of time)
-	//any inputs "checking in" during the reservation gets "wait listed" for admission at end of reservation
 	spamChan := rl.Spammy  //pipelined channel for rx only, no need to close //todo add direction
 	var buffer interface{} //data received from spammy channel
 	var ok bool
