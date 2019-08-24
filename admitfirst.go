@@ -2,8 +2,6 @@ package r8lmt
 
 import "time"
 
-//admit-first pipelining, https://blog.golang.org/pipelines
-
 func AdmitFirstPipeline(rl *RateLimit) {
 	//inspired by leo lara https://disqus.com/by/disqus_BI7TGHPb0v/
 	//first input is "admitted" ("pass through") and begins the "reservation" (delay of time)

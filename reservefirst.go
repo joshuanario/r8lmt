@@ -2,8 +2,6 @@ package r8lmt
 
 import "time"
 
-//reserve-first pipelining, https://blog.golang.org/pipelines
-
 func ReserveFirstPipeline(rl *RateLimit) {
 	//Caleb Lloyd's idea of rate limiting, first input is admitted ("debounced") to the end of "reservation wait",
 	//an output is expected at end of a reservation irregardless of subsequent inputs during the reservation wait
