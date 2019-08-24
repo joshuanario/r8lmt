@@ -29,7 +29,7 @@ func AdmitFirstPipeline(rl *RateLimit) {
 		resetTimer()
 	}
 	go func() {
-		defer close(rl.Limited)     //closing channels https://go101.org/article/channel-closing.html
+		defer close(rl.Limited)
 		listenAndAdmitNextCheckin() //wait for admitted spamChan then send to start next reservation wait
 		for {
 			select {
