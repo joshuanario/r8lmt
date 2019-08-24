@@ -50,7 +50,7 @@ type WaitList struct {
 	Maximum int
 }
 
-func NewWaitList() *WaitList {
+func newWaitList() *WaitList {
 	return &WaitList{OnWait: FIRSTINLINE, Maximum: 0}
 }
 
@@ -65,7 +65,7 @@ func NewLimiter(in chan interface{}, out chan interface{}, t time.Duration, s St
 		Duration:     t,
 		IsExtensible: ext,
 	}
-	ret := RateLimit{WaitList: *NewWaitList(), Reservation: r, Limited: out, Spammy: in, MaxReservations: 0}
+	ret := RateLimit{WaitList: *newWaitList(), Reservation: r, Limited: out, Spammy: in, MaxReservations: 0}
 	startPipeline(ret)
 	return &ret
 }
