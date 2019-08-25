@@ -22,61 +22,51 @@ func ReserveFirstPipeline(rl *RateLimit, out chan<- interface{}, in <-chan inter
 		}
 	}()
 	var buffer interface{}
-	var ok bool
 	unreserved := false
 	lmtd := out
-	admit := func(newdata interface{}) {
+	// admit := func(newdata interface{}) {
+	// 	go func() {
+	// 		lmtd <- newdata
+	// 	}()
+	// }
+	if rl.Reservation.IsExtensible {
 		go func() {
-			lmtd <- newdata
-		}()
-	}
-	debouncedPipeline := func() {
-		timer := time.NewTimer(rl.Reservation.Duration)
-		for {
-			select {
-			case buffer, ok = <-spmy:
-				if !ok {
-					return
-				}
-				timer.Reset(rl.Reservation.Duration)
-				unreserved = true
-			case <-timer.C:
-				admit(buffer)
-				if unreserved {
-					buffer, ok = <-spmy
+			timer := time.NewTimer(rl.Reservation.Duration)
+			for {
+				select {
+				case spam, ok := <-spmy:
+					if unreserved {
+						buffer = spam
+					}
 					if !ok {
 						return
 					}
+					timer.Reset(rl.Reservation.Duration)
+					unreserved = true
+				case <-timer.C:
+					lmtd <- buffer
 					timer = time.NewTimer(rl.Reservation.Duration)
 					unreserved = false
 				}
 			}
-		}
-	}
-	throttledPipeline := func() {
-		for {
-			select {
-			case buffer, ok = <-spmy:
-				if !ok {
-					return
-				}
-				unreserved = true
-			case <-time.After(rl.Reservation.Duration):
-				admit(buffer)
-				if unreserved {
-					buffer, ok = <-spmy
+		}()
+	} else {
+		go func() {
+			for {
+				select {
+				case spam, ok := <-spmy:
+					if unreserved {
+						buffer = spam
+					}
 					if !ok {
 						return
 					}
+					unreserved = true
+				case <-time.After(rl.Reservation.Duration):
+					lmtd <- buffer
 					unreserved = false
 				}
 			}
-		}
-	}
-
-	if rl.Reservation.IsExtensible { //aka debouncer where "reservation wait" interval can be extended due to spam
-		go debouncedPipeline()
-	} else { //aka fixed-rate throttler where reservation intervals are consistent
-		go throttledPipeline()
+		}()
 	}
 }

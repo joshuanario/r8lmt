@@ -28,16 +28,13 @@ func AdmitFirstPipeline(rl *RateLimit, out chan<- interface{}, in <-chan interfa
 				lmtd <- newdata
 			}()
 		}
-		resetTimer := func() {
-			timer = time.NewTimer(rl.Reservation.Duration)
-		}
 		listenAndAdmitNextCheckin := func() {
 			buffer, ok = <-spmy
 			admit(buffer)
 			if !ok {
 				return
 			}
-			resetTimer()
+			timer = time.NewTimer(rl.Reservation.Duration)
 		}
 		listenAndAdmitNextCheckin()
 		for {
