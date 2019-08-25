@@ -1,0 +1,44 @@
+package r8lmt_test
+
+import (
+	"fmt"
+	"strconv"
+	"time"
+
+	"github.com/joshuanario/r8lmt"
+)
+
+func ExampleNewLimiter() {
+	in := make(chan interface{})
+	out := make(chan interface{})
+	t := time.Second
+	s := r8lmt.THROTTLE
+	bw := r8lmt.RESERVEFIRST
+	lmtr := r8lmt.NewLimiter(in, out, t, s, bw)
+	str := strconv.FormatBool(lmtr.Reservation.IsExtensible)
+	fmt.Printf("IsExtensible: %s\n", str)
+	str = lmtr.Reservation.Duration.String()
+	fmt.Printf("Duration: %s\n", str)
+	lmtd := lmtr.Limited
+	spmy := lmtr.Spammy
+	go func() {
+		time.Sleep(100 * time.Millisecond)
+		spmy <- struct {
+			test string
+		}{
+			test: "foobarfoobar",
+		}
+	}()
+	foo := <-lmtd
+	stim, ok := foo.(struct {
+		test string
+	})
+	if !ok {
+		panic("Type assertion failed")
+	}
+	str = stim.test
+	fmt.Printf("Stimulus: %s\n", str)
+	// Output: IsExtensible: false
+	// Duration: 1s
+	// Stimulus: foobarfoobar
+}
