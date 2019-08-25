@@ -9,21 +9,21 @@ const (
 	THROTTLE = Style('t')
 )
 
-type BeforeWait int
+type BeforeWait rune
 
 const (
 	RESERVEFIRST = BeforeWait('r')
 	ADMITFIRST   = BeforeWait('a')
 )
 
-type AfterWait int
+type AfterWait rune
 
 const (
 	CLEARALL = AfterWait('c')
 	KEEPALL  = AfterWait('k')
 )
 
-type OnWait int
+type OnWait rune
 
 const (
 	FIRSTINLINE = OnWait('f')
