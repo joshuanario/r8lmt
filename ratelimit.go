@@ -54,7 +54,7 @@ func newWaitList() *WaitList {
 	return &WaitList{OnWait: FIRSTINLINE, Maximum: 0}
 }
 
-func NewLimiter(in chan interface{}, out chan interface{}, t time.Duration, s Style, bw BeforeWait) *RateLimit {
+func NewLimiter(out chan interface{}, in chan interface{}, t time.Duration, s Style, bw BeforeWait) *RateLimit {
 	var ext bool = false
 	if s == DEBOUNCE {
 		ext = true

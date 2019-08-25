@@ -14,7 +14,7 @@ func ExampleNewLimiter() {
 	t := time.Second
 	s := r8lmt.THROTTLE
 	bw := r8lmt.RESERVEFIRST
-	lmtr := r8lmt.NewLimiter(in, out, t, s, bw)
+	lmtr := r8lmt.NewLimiter(out, in, t, s, bw)
 	str := strconv.FormatBool(lmtr.Reservation.IsExtensible)
 	fmt.Printf("IsExtensible: %s\n", str)
 	str = lmtr.Reservation.Duration.String()
