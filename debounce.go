@@ -2,8 +2,8 @@ package r8lmt
 
 import "time"
 
+//Debouncer - wrapper for NewLimiter
 func Debouncer(out chan interface{}, in chan interface{}, delay time.Duration, leading bool, trailing bool) {
-	//(out, in, delay, DEBOUNCE, leading, trailing)
 	bw := RESERVEFIRST
 	if leading {
 		bw = ADMITFIRST

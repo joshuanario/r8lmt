@@ -7,8 +7,8 @@ import "time"
 //first input is "admitted" ("pass through") and begins the "reservation" (delay of time)
 //any inputs "checking in" during the reservation gets "wait listed" for admission at end of reservation
 func AdmitFirstPipeline(rl *RateLimit) {
-	spamChan := rl.Spammy  //pipelined channel for rx only, no need to close //todo add direction
-	var buffer interface{} //data received from spammy channel
+	spamChan := rl.Spammy //todo add direction
+	var buffer interface{}
 	var ok bool
 	var timer *time.Timer
 	admit := func(newdata interface{}) {
@@ -20,9 +20,8 @@ func AdmitFirstPipeline(rl *RateLimit) {
 		timer = time.NewTimer(rl.Reservation.Duration)
 	}
 	listenAndAdmitNextCheckin := func() {
-		buffer, ok = <-spamChan //blocks for a "check in"
-		admit(buffer)           //admit a checkin
-		// If channel closed exit goroutine
+		buffer, ok = <-spamChan
+		admit(buffer)
 		if !ok {
 			return
 		}
@@ -30,19 +29,19 @@ func AdmitFirstPipeline(rl *RateLimit) {
 	}
 	go func() {
 		defer close(rl.Limited)
-		listenAndAdmitNextCheckin() //wait for admitted spamChan then send to start next reservation wait
+		listenAndAdmitNextCheckin()
 		for {
 			select {
-			case <-timer.C: //reservation wait is over
-				listenAndAdmitNextCheckin() //listen for checkin to be admitted
-			case buffer, ok = <-spamChan: //a checkin during the reservation wait
+			case <-timer.C:
+				listenAndAdmitNextCheckin()
+			case buffer, ok = <-spamChan:
 				if !ok {
 					return
 				}
-				if rl.Reservation.IsExtensible { //debounce, extend the reservation wait by resetting the countdown
+				if rl.Reservation.IsExtensible {
 					timer.Reset(rl.Reservation.Duration)
-				} //else do not extend the delay
-			} // chan sel
-		} // loop
+				}
+			}
+		}
 	}()
 }

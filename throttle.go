@@ -2,6 +2,7 @@ package r8lmt
 
 import "time"
 
+//Throttler - wrapper for NewLimiter
 func Throttler(out chan interface{}, in chan interface{}, delay time.Duration, leading bool, trailing bool) {
 	bw := RESERVEFIRST
 	if leading {

@@ -10,10 +10,10 @@ import "time"
 //(wait listed at the back of the line)
 //Note that WillAdmitAfter is irrelevant for a reserve-first ratelimiting
 func ReserveFirstPipeline(rl *RateLimit) {
-	spamChan := rl.Spammy //pipelined channel for rx only, no need to close //todo add direction
+	spamChan := rl.Spammy //todo add direction
 	var buffer interface{}
 	var ok bool
-	unreserved := false //flag when something is wait listed
+	unreserved := false
 	debouncedPipeline := func() {
 		defer close(rl.Limited)
 		timer := time.NewTimer(rl.Reservation.Duration)
@@ -21,7 +21,6 @@ func ReserveFirstPipeline(rl *RateLimit) {
 			select {
 			case buffer, ok = <-spamChan:
 				if !ok {
-					// If channel closed exit goroutine
 					return
 				}
 				timer.Reset(rl.Reservation.Duration)
@@ -57,7 +56,6 @@ func ReserveFirstPipeline(rl *RateLimit) {
 				if unreserved {
 					buffer, ok = <-spamChan
 					if !ok {
-						// If channel closed exit goroutine
 						return
 					}
 					unreserved = false
