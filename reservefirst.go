@@ -9,28 +9,41 @@ import "time"
 //wait") before admission and any other inputs that attempt to check in while someone is wait listed gets rejected
 //(wait listed at the back of the line)
 //Note that WillAdmitAfter is irrelevant for a reserve-first ratelimiting
-func ReserveFirstPipeline(rl *RateLimit) {
-	spamChan := rl.Spammy //todo add direction
+func ReserveFirstPipeline(rl *RateLimit, out chan<- interface{}, in <-chan interface{}) {
+	spmy := make(chan interface{})
+	go func() {
+		defer close(spmy)
+		for {
+			buffer, ok := <-in
+			spmy <- buffer
+			if !ok {
+				return
+			}
+		}
+	}()
 	var buffer interface{}
 	var ok bool
 	unreserved := false
+	lmtd := out
+	admit := func(newdata interface{}) {
+		go func() {
+			lmtd <- newdata
+		}()
+	}
 	debouncedPipeline := func() {
-		defer close(rl.Limited)
 		timer := time.NewTimer(rl.Reservation.Duration)
 		for {
 			select {
-			case buffer, ok = <-spamChan:
+			case buffer, ok = <-spmy:
 				if !ok {
 					return
 				}
 				timer.Reset(rl.Reservation.Duration)
 				unreserved = true
 			case <-timer.C:
-				go func() {
-					rl.Limited <- buffer
-				}()
+				admit(buffer)
 				if unreserved {
-					buffer, ok = <-spamChan
+					buffer, ok = <-spmy
 					if !ok {
 						return
 					}
@@ -41,20 +54,17 @@ func ReserveFirstPipeline(rl *RateLimit) {
 		}
 	}
 	throttledPipeline := func() {
-		defer close(rl.Limited)
 		for {
 			select {
-			case buffer, ok = <-spamChan:
+			case buffer, ok = <-spmy:
 				if !ok {
 					return
 				}
 				unreserved = true
 			case <-time.After(rl.Reservation.Duration):
-				go func() {
-					rl.Limited <- buffer
-				}()
+				admit(buffer)
 				if unreserved {
-					buffer, ok = <-spamChan
+					buffer, ok = <-spmy
 					if !ok {
 						return
 					}

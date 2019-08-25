@@ -32,8 +32,6 @@ const (
 
 type RateLimit struct {
 	MaxReservations int //todo maxReservations
-	Spammy          chan interface{}
-	Limited         chan interface{}
 	Reservation     Reservation
 	WaitList        WaitList
 }
@@ -54,7 +52,7 @@ func newWaitList() *WaitList {
 	return &WaitList{OnWait: FIRSTINLINE, Maximum: 0}
 }
 
-func NewLimiter(out chan interface{}, in chan interface{}, t time.Duration, s Style, bw BeforeWait) *RateLimit {
+func NewLimiter(out chan<- interface{}, in <-chan interface{}, t time.Duration, s Style, bw BeforeWait) *RateLimit {
 	var ext bool = false
 	if s == DEBOUNCE {
 		ext = true
@@ -65,15 +63,15 @@ func NewLimiter(out chan interface{}, in chan interface{}, t time.Duration, s St
 		Duration:     t,
 		IsExtensible: ext,
 	}
-	ret := RateLimit{WaitList: *newWaitList(), Reservation: r, Limited: out, Spammy: in, MaxReservations: 0}
-	startPipeline(ret)
+	ret := RateLimit{WaitList: *newWaitList(), Reservation: r, MaxReservations: 0}
+	startPipeline(ret, out, in)
 	return &ret
 }
 
-func startPipeline(rl RateLimit) {
+func startPipeline(rl RateLimit, out chan<- interface{}, in <-chan interface{}) {
 	if rl.Reservation.BeforeWait == ADMITFIRST {
-		AdmitFirstPipeline(&rl)
+		AdmitFirstPipeline(&rl, out, in)
 	} else {
-		ReserveFirstPipeline(&rl)
+		ReserveFirstPipeline(&rl, out, in)
 	}
 }

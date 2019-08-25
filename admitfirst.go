@@ -6,35 +6,45 @@ import "time"
 //inspired by leo lara https://disqus.com/by/disqus_BI7TGHPb0v/
 //first input is "admitted" ("pass through") and begins the "reservation" (delay of time)
 //any inputs "checking in" during the reservation gets "wait listed" for admission at end of reservation
-func AdmitFirstPipeline(rl *RateLimit) {
-	spamChan := rl.Spammy //todo add direction
-	var buffer interface{}
-	var ok bool
-	var timer *time.Timer
-	admit := func(newdata interface{}) {
-		go func() {
-			rl.Limited <- newdata
-		}()
-	}
-	resetTimer := func() {
-		timer = time.NewTimer(rl.Reservation.Duration)
-	}
-	listenAndAdmitNextCheckin := func() {
-		buffer, ok = <-spamChan
-		admit(buffer)
-		if !ok {
-			return
-		}
-		resetTimer()
-	}
+func AdmitFirstPipeline(rl *RateLimit, out chan<- interface{}, in <-chan interface{}) {
+	spmy := make(chan interface{})
 	go func() {
-		defer close(rl.Limited)
+		defer close(spmy)
+		for {
+			buffer, ok := <-in
+			spmy <- buffer
+			if !ok {
+				return
+			}
+		}
+	}()
+	go func() {
+		lmtd := out
+		var buffer interface{}
+		var ok bool
+		var timer *time.Timer
+		admit := func(newdata interface{}) {
+			go func() {
+				lmtd <- newdata
+			}()
+		}
+		resetTimer := func() {
+			timer = time.NewTimer(rl.Reservation.Duration)
+		}
+		listenAndAdmitNextCheckin := func() {
+			buffer, ok = <-spmy
+			admit(buffer)
+			if !ok {
+				return
+			}
+			resetTimer()
+		}
 		listenAndAdmitNextCheckin()
 		for {
 			select {
 			case <-timer.C:
 				listenAndAdmitNextCheckin()
-			case buffer, ok = <-spamChan:
+			case buffer, ok = <-spmy:
 				if !ok {
 					return
 				}

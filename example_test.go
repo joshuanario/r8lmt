@@ -19,17 +19,15 @@ func ExampleNewLimiter() {
 	fmt.Printf("IsExtensible: %s\n", str)
 	str = lmtr.Reservation.Duration.String()
 	fmt.Printf("Duration: %s\n", str)
-	lmtd := lmtr.Limited
-	spmy := lmtr.Spammy
 	go func() {
 		time.Sleep(100 * time.Millisecond)
-		spmy <- struct {
+		in <- struct {
 			text string
 		}{
 			text: "foobarfoobar",
 		}
 	}()
-	foo := <-lmtd
+	foo := <-out
 	stim, ok := foo.(struct {
 		text string
 	})
