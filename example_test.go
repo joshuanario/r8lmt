@@ -24,19 +24,19 @@ func ExampleNewLimiter() {
 	go func() {
 		time.Sleep(100 * time.Millisecond)
 		spmy <- struct {
-			test string
+			text string
 		}{
-			test: "foobarfoobar",
+			text: "foobarfoobar",
 		}
 	}()
 	foo := <-lmtd
 	stim, ok := foo.(struct {
-		test string
+		text string
 	})
 	if !ok {
 		panic("Type assertion failed")
 	}
-	str = stim.test
+	str = stim.text
 	fmt.Printf("Stimulus: %s\n", str)
 	// Output: IsExtensible: false
 	// Duration: 1s
