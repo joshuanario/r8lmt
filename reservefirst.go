@@ -22,51 +22,34 @@ func ReserveFirstPipeline(rl *RateLimit, out chan<- interface{}, in <-chan inter
 		}
 	}()
 	var buffer interface{}
-	unreserved := false
+	reserved := false
 	lmtd := out
 	admit := func(newdata interface{}) {
 		go func() {
 			lmtd <- newdata
 		}()
 	}
-	if rl.Reservation.IsExtensible {
-		go func() {
-			timer := time.NewTimer(rl.Reservation.Duration)
-			for {
-				select {
-				case spam, ok := <-spmy:
-					if unreserved {
-						buffer = spam
-					}
-					if !ok {
-						return
-					}
+
+	go func() {
+		timer := time.NewTimer(rl.Reservation.Duration)
+		for {
+			select {
+			case spam, ok := <-spmy:
+				if !reserved {
+					buffer = spam
+					reserved = true
+				}
+				if !ok {
+					return
+				}
+				if rl.Reservation.IsExtensible {
 					timer.Reset(rl.Reservation.Duration)
-					unreserved = true
-				case <-timer.C:
-					admit(buffer)
-					timer = time.NewTimer(rl.Reservation.Duration)
-					unreserved = false
 				}
+			case <-timer.C:
+				admit(buffer)
+				timer = time.NewTimer(rl.Reservation.Duration)
+				reserved = false
 			}
-		}()
-	} else {
-		go func() {
-			for {
-				select {
-				case spam, ok := <-spmy:
-					if unreserved {
-						buffer = spam
-					}
-					if !ok {
-						return
-					}
-					unreserved = true
-				case <-time.After(rl.Reservation.Duration):
-					admit(buffer)
-					unreserved = false
-				}
-			}
-		}()
-	}
+		}
+	}()
 }
