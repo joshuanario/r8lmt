@@ -28,7 +28,7 @@ func testLeadingThrottler(t *testing.T) {
 		t.Errorf("cannot receive from out channel")
 	}
 	casted := o.(int)
-	if casted <= 0 || casted > 256 {
+	if casted <= 0 || casted > 257 {
 		t.Fatalf("non-zero expected; outcome %d", casted)
 	}
 	oo, ok := <-out
@@ -36,12 +36,12 @@ func testLeadingThrottler(t *testing.T) {
 		t.Errorf("cannot receive from out channel")
 	}
 	casted = oo.(int)
-	if casted <= 0 || casted > 256 {
+	if casted <= 0 || casted > 257 {
 		t.Fatalf("non-zero expected; outcome %d", casted)
 	}
 	select {
 	case oo, _ = <-out:
-		casted := o.(int)
+		casted = o.(int)
 		t.Fatalf("expected empty channel; outcome %d", casted)
 	case <-time.After(4 * dur):
 	}
@@ -52,32 +52,20 @@ func testNonleadingThrottler(t *testing.T) {
 	in := make(chan interface{})
 	dur := 1 * time.Microsecond
 	r8lmt.Throttler(out, in, dur, false)
-	done := false
-	c := 0
-	for {
-		select {
-		case <-time.After(dur):
-			done = true
-			break
-		case <-time.After(dur / 4):
-			in <- 257 - c
-			c++
-		}
-		if done {
-			break
-		}
+	for c := 0; c < 4; c++ {
+		in <- 257 - c
 	}
 	o, ok := <-out
 	if !ok {
 		t.Errorf("cannot receive from out channel")
 	}
 	casted := o.(int)
-	if casted <= 0 || casted > 256 {
+	if casted <= 0 || casted > 257 {
 		t.Fatalf("non-zero expected; outcome %d", casted)
 	}
 	select {
 	case o, _ = <-out:
-		casted := o.(int)
+		casted = o.(int)
 		t.Fatalf("expected empty channel; outcome %d", casted)
 	case <-time.After(4 * dur):
 	}

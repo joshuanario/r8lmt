@@ -46,7 +46,9 @@ func ReserveFirstPipeline(rl *RateLimit, out chan<- interface{}, in <-chan inter
 					timer.Reset(rl.Reservation.Duration)
 				}
 			case <-timer.C:
-				admit(buffer)
+				if reserved {
+					admit(buffer)
+				}
 				timer = time.NewTimer(rl.Reservation.Duration)
 				reserved = false
 			}

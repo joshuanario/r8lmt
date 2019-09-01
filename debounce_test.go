@@ -28,7 +28,7 @@ func testLeadingDebouncer(t *testing.T) {
 		t.Errorf("cannot receive from out channel")
 	}
 	casted := o.(int)
-	if casted <= 0 || casted > 256 {
+	if casted <= 0 || casted > 257 {
 		t.Fatalf("non-zero expected; outcome %d", casted)
 	}
 	oo, ok := <-out
@@ -36,7 +36,7 @@ func testLeadingDebouncer(t *testing.T) {
 		t.Errorf("cannot receive from out channel")
 	}
 	casted = oo.(int)
-	if casted <= 0 || casted > 256 {
+	if casted <= 0 || casted > 257 {
 		t.Fatalf("non-zero expected; outcome %d", casted)
 	}
 	select {
@@ -52,29 +52,22 @@ func testNonleadingDebouncer(t *testing.T) {
 	in := make(chan interface{})
 	dur := 1 * time.Microsecond
 	r8lmt.Debouncer(out, in, dur, false)
-	var wg sync.WaitGroup
-	for c := 0; c < 256; c++ {
-		wg.Add(1)
-		go func() {
-			in <- 257 - c
-			wg.Done()
-		}()
+	for c := 0; c < 4; c++ {
+		in <- 257 - c
 	}
-	wg.Wait()
-	time.Sleep(dur)
 	o, ok := <-out
 	if !ok {
 		t.Errorf("cannot receive from out channel")
 	}
 	casted := o.(int)
-	if casted <= 0 || casted > 256 {
+	if casted <= 0 || casted > 257 {
 		t.Fatalf("non-zero expected; outcome %d", casted)
 	}
 	select {
 	case o, _ = <-out:
 		casted := o.(int)
 		t.Fatalf("expected empty channel; outcome %d", casted)
-	case <-time.After(4 * dur):
+	case <-time.After(5 * dur):
 	}
 }
 
