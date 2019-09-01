@@ -52,16 +52,21 @@ func testNonleadingThrottler(t *testing.T) {
 	in := make(chan interface{})
 	dur := 1 * time.Microsecond
 	r8lmt.Throttler(out, in, dur, false)
-	var wg sync.WaitGroup
-	for c := 0; c < 256; c++ {
-		wg.Add(1)
-		go func() {
+	done := false
+	c := 0
+	for {
+		select {
+		case <-time.After(dur):
+			done = true
+			break
+		case <-time.After(dur / 4):
 			in <- 257 - c
-			wg.Done()
-		}()
+			c++
+		}
+		if done {
+			break
+		}
 	}
-	wg.Wait()
-	time.Sleep(dur)
 	o, ok := <-out
 	if !ok {
 		t.Errorf("cannot receive from out channel")
