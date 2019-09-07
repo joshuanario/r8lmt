@@ -8,7 +8,7 @@ import (
 	"github.com/joshuanario/r8lmt"
 )
 
-func testLeadingDebouncer(t *testing.T) {
+func TestLeadingDebouncer(t *testing.T) {
 	out := make(chan interface{})
 	in := make(chan interface{})
 	dur := 1 * time.Microsecond
@@ -16,13 +16,12 @@ func testLeadingDebouncer(t *testing.T) {
 	var wg sync.WaitGroup
 	for c := 0; c < 256; c++ {
 		wg.Add(1)
-		go func() {
-			in <- 257 - c
+		go func(iifeC int) {
+			in <- 257 - iifeC
 			wg.Done()
-		}()
+		}(c)
 	}
 	wg.Wait()
-	time.Sleep(dur)
 	o, ok := <-out
 	if !ok {
 		t.Errorf("cannot receive from out channel")
@@ -47,14 +46,20 @@ func testLeadingDebouncer(t *testing.T) {
 	}
 }
 
-func testNonleadingDebouncer(t *testing.T) {
+func TestNonleadingDebouncer(t *testing.T) {
 	out := make(chan interface{})
 	in := make(chan interface{})
 	dur := 1 * time.Microsecond
 	r8lmt.Debouncer(out, in, dur, false)
-	for c := 0; c < 4; c++ {
-		in <- 257 - c
+	var wg sync.WaitGroup
+	for c := 0; c < 256; c++ {
+		wg.Add(1)
+		go func(iifeC int) {
+			in <- 257 - iifeC
+			wg.Done()
+		}(c)
 	}
+	wg.Wait()
 	o, ok := <-out
 	if !ok {
 		t.Errorf("cannot receive from out channel")
@@ -63,15 +68,12 @@ func testNonleadingDebouncer(t *testing.T) {
 	if casted <= 0 || casted > 257 {
 		t.Fatalf("non-zero expected; outcome %d", casted)
 	}
+	o, _ = <-out
+	casted = o.(int) //todo needs review
 	select {
 	case o, _ = <-out:
-		casted := o.(int)
+		casted = o.(int)
 		t.Fatalf("expected empty channel; outcome %d", casted)
-	case <-time.After(5 * dur):
+	case <-time.After(4 * dur):
 	}
-}
-
-func TestDebouncer(t *testing.T) {
-	testLeadingDebouncer(t)
-	testNonleadingDebouncer(t)
 }

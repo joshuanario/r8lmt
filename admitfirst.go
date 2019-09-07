@@ -2,7 +2,7 @@ package r8lmt
 
 import "time"
 
-//AdmitFirstPipeline
+//AdmitFirstPipeline -
 //inspired by leo lara https://disqus.com/by/disqus_BI7TGHPb0v/
 //first input is "admitted" ("pass through") and begins the "reservation" (delay of time)
 //any inputs "checking in" during the reservation gets "wait listed" for admission at end of reservation

@@ -53,7 +53,7 @@ func newWaitList() *WaitList {
 }
 
 func NewLimiter(out chan<- interface{}, in <-chan interface{}, t time.Duration, s Style, bw BeforeWait) *RateLimit {
-	var ext bool = false
+	ext := false
 	if s == DEBOUNCE {
 		ext = true
 	}
